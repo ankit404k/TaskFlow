@@ -64,12 +64,20 @@ function setupEventListeners() {
 
     // Close stats panel when clicking outside
     document.addEventListener('click', (e) => {
-        const panel = document.getElementById('statsPanel');
-        if (!panel) return;
-        const isActive = panel.classList.contains('active');
+        const statsPanel = document.getElementById('statsPanel');
+        const helpModal = document.getElementById('helpModal');
+
         const clickedStatsButton = !!e.target.closest('.btn-icon[title="Statistics"]');
-        if (isActive && !e.target.closest('#statsPanel') && !clickedStatsButton) {
+        const clickedHelpButton = !!e.target.closest('.btn-icon[title="Help"]');
+
+        // Close stats panel when clicking outside and not clicking the stats button
+        if (statsPanel && statsPanel.classList.contains('active') && !e.target.closest('#statsPanel') && !clickedStatsButton) {
             hideStats();
+        }
+
+        // Close help modal when clicking outside and not clicking the help button
+        if (helpModal && helpModal.classList.contains('active') && !e.target.closest('#helpModal') && !clickedHelpButton) {
+            hideHelp();
         }
     });
 }
@@ -545,7 +553,13 @@ function hideStats() {
 
 // ===== HELP MODAL =====
 function showHelp() {
-    document.getElementById('helpModal').classList.add('active');
+    const modal = document.getElementById('helpModal');
+    if (!modal) return;
+    if (modal.classList.contains('active')) {
+        modal.classList.remove('active');
+    } else {
+        modal.classList.add('active');
+    }
 }
 
 function hideHelp() {
