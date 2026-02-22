@@ -553,13 +553,7 @@ function hideStats() {
 
 // ===== HELP MODAL =====
 function showHelp() {
-    const modal = document.getElementById('helpModal');
-    if (!modal) return;
-    if (modal.classList.contains('active')) {
-        modal.classList.remove('active');
-    } else {
-        modal.classList.add('active');
-    }
+    document.getElementById('helpModal').classList.add('active');
 }
 
 function hideHelp() {
