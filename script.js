@@ -61,6 +61,17 @@ function setupEventListeners() {
             document.getElementById('searchBox').focus();
         }
     });
+
+    // Close stats panel when clicking outside
+    document.addEventListener('click', (e) => {
+        const panel = document.getElementById('statsPanel');
+        if (!panel) return;
+        const isActive = panel.classList.contains('active');
+        const clickedStatsButton = !!e.target.closest('.btn-icon[title="Statistics"]');
+        if (isActive && !e.target.closest('#statsPanel') && !clickedStatsButton) {
+            hideStats();
+        }
+    });
 }
 
 // ===== KEYBOARD SHORTCUTS =====
@@ -124,6 +135,11 @@ function createTaskElement(task, columnId) {
     taskDiv.id = `task-${task.id}`;
     taskDiv.ondragstart = (e) => drag(e, task.id, columnId);
     taskDiv.ondragend = dragEnd;
+
+    // Touch / Mobile drag support
+    taskDiv.addEventListener('touchstart', (e) => touchStart(e, task.id, columnId), { passive: false });
+    taskDiv.addEventListener('touchmove', touchMove, { passive: false });
+    taskDiv.addEventListener('touchend', touchEnd);
     
     // Format due date
     let dueDateHtml = '';
@@ -159,6 +175,104 @@ function createTaskElement(task, columnId) {
     `;
     
     return taskDiv;
+}
+
+// ===== Touch Drag Helpers for Mobile Devices =====
+const touchDrag = {
+    taskId: null,
+    sourceColumn: null,
+    clone: null,
+    offsetX: 0,
+    offsetY: 0
+};
+
+function touchStart(e, taskId, sourceColumn) {
+    // Prevent scrolling while dragging
+    e.preventDefault();
+    const touch = e.touches[0];
+    const orig = document.getElementById(`task-${taskId}`);
+    if (!orig) return;
+
+    touchDrag.taskId = taskId;
+    touchDrag.sourceColumn = sourceColumn;
+
+    // Create visual clone
+    const rect = orig.getBoundingClientRect();
+    touchDrag.offsetX = touch.clientX - rect.left;
+    touchDrag.offsetY = touch.clientY - rect.top;
+
+    const clone = orig.cloneNode(true);
+    clone.style.position = 'fixed';
+    clone.style.left = `${rect.left}px`;
+    clone.style.top = `${rect.top}px`;
+    clone.style.width = `${rect.width}px`;
+    clone.style.pointerEvents = 'none';
+    clone.style.opacity = '0.95';
+    clone.style.zIndex = 9999;
+    document.body.appendChild(clone);
+    touchDrag.clone = clone;
+
+    // Add dragging class to original for visual feedback
+    orig.classList.add('dragging');
+}
+
+function touchMove(e) {
+    if (!touchDrag.clone) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    touchDrag.clone.style.left = `${touch.clientX - touchDrag.offsetX}px`;
+    touchDrag.clone.style.top = `${touch.clientY - touchDrag.offsetY}px`;
+
+    // Add drag-over state to column under touch
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    document.querySelectorAll('.kanban-column').forEach(col => col.classList.remove('drag-over'));
+    const column = el?.closest?.('.kanban-column');
+    if (column) column.classList.add('drag-over');
+}
+
+function touchEnd(e) {
+    const clone = touchDrag.clone;
+    const id = touchDrag.taskId;
+    const src = touchDrag.sourceColumn;
+
+    // Clean up dragging visuals
+    if (clone && clone.parentNode) clone.parentNode.removeChild(clone);
+    touchDrag.clone = null;
+
+    const orig = document.getElementById(`task-${id}`);
+    if (orig) orig.classList.remove('dragging');
+
+    // Determine drop target from last touch (use changedTouches or first touch)
+    const touch = (e.changedTouches && e.changedTouches[0]) || (e.touches && e.touches[0]);
+    if (!touch) return;
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const targetColumn = el?.closest?.('.kanban-column')?.id;
+
+    if (!targetColumn || !src) {
+        // remove any drag-over highlight
+        document.querySelectorAll('.kanban-column').forEach(col => col.classList.remove('drag-over'));
+        touchDrag.taskId = null;
+        touchDrag.sourceColumn = null;
+        return;
+    }
+
+    // Perform move
+    const taskId = parseInt(id);
+    const task = boards[src].find(t => t.id === taskId);
+    if (task) {
+        boards[src] = boards[src].filter(t => t.id !== taskId);
+        task.status = targetColumn;
+        boards[targetColumn].push(task);
+        saveToHistory();
+        renderBoard();
+        updateStats();
+        saveToLocalStorage();
+        showToast(`Task moved to ${targetColumn}`);
+    }
+
+    document.querySelectorAll('.kanban-column').forEach(col => col.classList.remove('drag-over'));
+    touchDrag.taskId = null;
+    touchDrag.sourceColumn = null;
 }
 
 // ===== DRAG & DROP IMPLEMENTATION =====
@@ -415,8 +529,14 @@ function updateStats() {
 }
 
 function showStats() {
-    updateStats();
-    document.getElementById('statsPanel').classList.add('active');
+    const panel = document.getElementById('statsPanel');
+    if (!panel) return;
+    if (panel.classList.contains('active')) {
+        panel.classList.remove('active');
+    } else {
+        updateStats();
+        panel.classList.add('active');
+    }
 }
 
 function hideStats() {
