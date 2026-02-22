@@ -31,7 +31,21 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10"></circle>
                             <path d="M12 16v-4M12 8h.01"></path>
-                Task Statistics</h2>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="header-bottom">
+                <button class="btn-undo" onclick="undo()" title="Undo">↶ Undo</button>
+                <button class="btn-redo" onclick="redo()" title="Redo">↷ Redo</button>
+                <button class="btn-clear-all" onclick="clearAll()" title="Clear All">🗑️ Clear All</button>
+            </div>
+        </header>
+
+        <!-- Statistics Panel -->
+        <div class="stats-panel" id="statsPanel">
+            <button class="btn-close" onclick="hideStats()">✕</button>
+            <h2>Task Statistics</h2>
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-value" id="totalTasks">0</div>
@@ -47,20 +61,6 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="completionRate">0%</div>
-                    <div class="stat-label">Rate</div>
-                </div>
-            </div>
-            <div class="priority-stats">
-                <h3>Priority</h3>
-                <div class="priority-bar">
-                    <div class="priority-segment high" id="highCount"></div>
-                    <div class="priority-segment medium" id="mediumCount"></div>
-                    <div class="priority-segment low" id="lowCount"></div>
-                </div>
-                <div class="priority-legend">
-                    <span>High: <span id="highLabel">0</span></span>
-                    <span>Medium: <span id="mediumLabel">0</span></span>
-                    <span>s="stat-value" id="completionRate">0%</div>
                     <div class="stat-label">Completion Rate</div>
                 </div>
             </div>
@@ -72,9 +72,9 @@
                     <div class="priority-segment low" id="lowCount"></div>
                 </div>
                 <div class="priority-legend">
-                    <span>🔴 High: <span id="highLabel">0</span></span>
-                    <span>🟡 Medium: <span id="mediumLabel">0</span></span>
-                    <span>🟢 Low: <span id="lowLabel">0</span></span>
+                    <span>High: <span id="highLabel">0</span></span>
+                    <span>Medium: <span id="mediumLabel">0</span></span>
+                    <span>Low: <span id="lowLabel">0</span></span>
                 </div>
             </div>
         </div>
